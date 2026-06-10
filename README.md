@@ -1,29 +1,32 @@
-# ADHERE+ Patient App
+# ADHERE+ Mobile App
 
-React Native patient app scaffold for ADHERE+, built with Expo Router and NativeWind.
+Patient-facing React Native app for ADHERE+, built with Expo Router, NativeWind, and TypeScript.
 
-## Tech Stack
+## Stack
 
-- React Native
 - Expo SDK 54
+- React Native 0.81
+- React 19
 - Expo Router
 - NativeWind
-- Supabase JS SDK
+- Supabase JS
 - Expo Notifications
 
 ## Requirements
 
 - Node `22.x`
 - npm `10+`
-- Expo Go on iPhone or Android
+- Xcode / Android Studio if you want to run native builds
+- Expo Go if you only want device preview
 
-This project has been tested against `Node 22`. Using `Node 24` caused Expo and Metro compatibility issues during setup.
+The repo is pinned to Node `>=22 <23` in [`package.json`](./package.json). Expo setup in this project was verified against Node 22.
 
 ## Setup
 
-1. Install Node `22`
-   - If you use `nvm`, run `nvm use` from the project root.
-   - The repo includes [.nvmrc](/Users/yiyan/Desktop/ADHERE/ADHERE+%20Mobile%20App%20UI%20(1)/.nvmrc:1).
+1. Use the repo Node version
+   ```bash
+   nvm use
+   ```
 2. Install dependencies
    ```bash
    npm install
@@ -32,76 +35,63 @@ This project has been tested against `Node 22`. Using `Node 24` caused Expo and 
    ```bash
    cp .env.example .env.local
    ```
-4. Fill in the Supabase values in `.env.local`
+4. Fill in:
    - `EXPO_PUBLIC_SUPABASE_URL`
    - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
-At the moment the app still uses mock data by default, so missing Supabase values will not block basic UI review.
+The app currently ships with mock data, so basic UI flows can still be reviewed before Supabase is fully wired.
 
-## Run
+## Scripts
 
-- Start Expo
+- Start Expo dev server
   ```bash
   npm start
   ```
-
 - Start Expo and clear cache
   ```bash
   npm run start:clear
   ```
-
-- iOS native run
+- Run iOS
   ```bash
   npm run ios
   ```
-
-- Android native run
+- Run Android
   ```bash
   npm run android
   ```
-
+- Run web preview
+  ```bash
+  npm run web
+  ```
 - Type check
   ```bash
   npm run typecheck
   ```
 
-## Expo Go
-
-- Use Expo Go with `Expo SDK 54`
-- Keep the phone and development machine on the same Wi-Fi
-- If QR loading is unstable, restart with:
-  ```bash
-  npx expo start --clear
-  ```
-
-## Project Structure
+## App Structure
 
 ```text
-app/                  Expo Router screens
-src/components/       Reusable RN UI
-src/store/            Mock state, selectors, session/app providers
-src/lib/              Supabase and notification helpers
-src/theme/            Design tokens
-src/types/            DB-shaped TypeScript types
-src/web-prototype/    Archived Figma-exported web prototype
+app/                        Expo Router routes
+app/(auth)/                 Authentication screens
+app/(tabs)/                 Main tab screens
+app/medication/             Medication detail, create, and edit flows
+app/settings/               Settings screens
+src/components/             Reusable UI and medication components
+src/lib/                    Shared utilities, Supabase, notifications
+src/store/                  Session state, app data provider, mock data
+src/styles/                 Shared CSS for web/nativewind support
+src/theme/                  Color and typography tokens
+src/types/                  Shared TypeScript types
 ```
 
 ## Current State
 
-- Patient-side RN skeleton is in place
-- Login, Today, Medications, Calendar, Passport, Profile, Change Password screens exist
-- Bottom tab bar includes the center `+` medication entry
-- Data is currently mocked in [src/store/mock-data.ts](/Users/yiyan/Desktop/ADHERE/ADHERE+%20Mobile%20App%20UI%20(1)/src/store/mock-data.ts:1)
-- Supabase client entry is prepared in [src/lib/supabase/client.ts](/Users/yiyan/Desktop/ADHERE/ADHERE+%20Mobile%20App%20UI%20(1)/src/lib/supabase/client.ts:1)
+- Patient app shell and primary navigation are in place.
+- Authentication, medication, calendar, passport, and profile flows are implemented.
+- The app currently supports mocked data and is prepared for Supabase integration.
 
-## Environment Notes
+## Notes
 
-- `google-services.json` is intentionally not committed yet
-- self-hosted Supabase is not wired yet
-- doctor web app is not part of this repo
-
-## Collaboration Notes
-
-- The original Figma-exported web prototype is kept only as a visual and flow reference
-- Do not add new routes under `src/`; Expo Router is configured to use `app/`
-- If Expo Router behaves oddly after route changes, fully stop Expo and restart it
+- Expo Router is configured to use `app/` as the route root.
+- `google-services.json` is not committed yet.
+- The doctor-facing web app is not part of this repository.

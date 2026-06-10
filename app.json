@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "ADHERE+",
+    "slug": "adhere-plus",
+    "scheme": "adhereplus",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "root": "./app"
+      }
+    },
+    "android": {
+      "package": "com.adhereplus.patient"
+    },
+    "ios": {
+      "bundleIdentifier": "com.adhereplus.patient"
+    }
+  }
+}

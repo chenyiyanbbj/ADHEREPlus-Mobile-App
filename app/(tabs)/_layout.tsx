@@ -18,9 +18,9 @@ function TabIcon({
   icon: ReactNode;
 }) {
   return (
-    <View className="items-center justify-center pt-2">
+    <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 8, width: 64 }}>
       {icon}
-      <Text style={{ color, fontSize: 11, fontWeight: focused ? "600" : "400", marginTop: 4 }}>{label}</Text>
+      <Text numberOfLines={1} style={{ color, fontSize: 11, fontWeight: focused ? "600" : "400", marginTop: 4 }}>{label}</Text>
       {focused ? <View style={{ width: 4, height: 4, borderRadius: 999, backgroundColor: colors.amber, marginTop: 3 }} /> : null}
     </View>
   );

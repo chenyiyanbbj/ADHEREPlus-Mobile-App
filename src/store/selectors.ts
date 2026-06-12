@@ -19,6 +19,8 @@ const gradientPalette: Record<string, string> = {
   "#E3A16B": "#F4C9A6",
   "#81C6BE": "#C7E7E2",
   "#D67C73": "#E9B2AC",
+  "#5B7C99": "#A9C0D2",
+  "#D17DA8": "#EAB4CD",
 };
 
 export function gradientForColor(color: string) {
@@ -31,50 +33,53 @@ export function groupSchedulesForList(
   doseEvents: DoseEventRecord[],
 ) {
   const today = todayKey();
-  const activeMedications = medications.filter((med) => med.is_active);
-  const items = schedules
-    .filter((schedule) => schedule.is_active)
-    .map((schedule) => {
-      const medication = activeMedications.find((med) => med.id === schedule.medication_id);
-      if (!medication) {
-        return null;
-      }
+  const items = medications.map((medication) => {
+    const medicationSchedules = schedules
+      .filter((schedule) => schedule.medication_id === medication.id)
+      .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
 
-      const doseEvent = doseEvents.find(
-        (event) => event.schedule_id === schedule.id && event.scheduled_datetime.slice(0, 10) === today,
-      );
+    if (!medicationSchedules.length) {
+      return null;
+    }
 
-      const hour = Number(schedule.scheduled_time.slice(0, 2));
-      const label = hour < 10 ? "Before breakfast" : hour < 15 ? "After lunch" : hour < 21 ? "Evening with meal" : "Before sleep";
+    const todayEvents = medicationSchedules
+      .map((schedule) =>
+        doseEvents.find((event) => event.schedule_id === schedule.id && event.scheduled_datetime.slice(0, 10) === today),
+      )
+      .filter(Boolean) as DoseEventRecord[];
 
-      return {
-        label,
-        medication,
-        schedule,
-        doseEvent,
-        gradientTo: gradientForColor(medication.color_label),
-      };
-    })
-    .filter(Boolean) as Array<{
+    return {
+      label: medication.is_active ? "Active" : "Inactive",
+      medication,
+      schedules: medicationSchedules,
+      todayEvents,
+      gradientTo: gradientForColor(medication.color_label),
+    };
+  }).filter(Boolean) as Array<{
     label: string;
     medication: MedicationRecord;
-    schedule: MedicationScheduleRecord;
-    doseEvent?: DoseEventRecord;
+    schedules: MedicationScheduleRecord[];
+    todayEvents: DoseEventRecord[];
     gradientTo: string;
   }>;
 
   const map = new Map<string, typeof items>();
-  for (const item of items.sort((a, b) => a.schedule.scheduled_time.localeCompare(b.schedule.scheduled_time))) {
+  for (const item of items.sort((a, b) => a.medication.medication_name.localeCompare(b.medication.medication_name))) {
     const group = map.get(item.label) ?? [];
     group.push(item);
     map.set(item.label, group);
   }
 
-  return Array.from(map.entries()).map(([label, groupedItems]) => ({
-    label,
-    count: groupedItems.length,
-    items: groupedItems,
-  }));
+  return ["Active", "Inactive"]
+    .map((label) => {
+      const groupedItems = map.get(label) ?? [];
+      return {
+        label,
+        count: groupedItems.length,
+        items: groupedItems,
+      };
+    })
+    .filter((group) => group.count > 0);
 }
 
 /**

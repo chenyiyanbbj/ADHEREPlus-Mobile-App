@@ -26,13 +26,13 @@ export default function MedicationsScreen() {
             <View className="mb-3 flex-row items-center justify-between">
               <Text className="text-sm font-semibold text-brand-navy">{group.label}</Text>
               <View className="rounded-full bg-brand-amber/15 px-3 py-1">
-                <Text className="text-xs font-semibold text-brand-amber">{group.count} dose{group.count === 1 ? "" : "s"}</Text>
+                <Text className="text-xs font-semibold text-brand-amber">{group.count} medication{group.count === 1 ? "" : "s"}</Text>
               </View>
             </View>
 
             {group.items.map((item) => (
               <MedicationCard
-                key={item.schedule.id}
+                key={item.medication.id}
                 item={item}
                 onPress={() => router.push({ pathname: "/medication/[id]", params: { id: item.medication.id } })}
                 onEdit={() => router.push({ pathname: "/medication/edit/[id]", params: { id: item.medication.id } })}

@@ -1,8 +1,10 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Check } from "lucide-react-native";
+import { Check, Flame } from "lucide-react-native";
+import Svg, { Circle } from "react-native-svg";
 
 import { PillGlyph } from "@/components/medication/pill-glyph";
+import { getMedicationBackground } from "@/lib/medications";
 import { useAppData } from "@/store/app-data-provider";
 import { colors } from "@/theme/colors";
 import { formatDoseTime, formatFriendlyDate } from "@/lib/dates";
@@ -13,30 +15,85 @@ function getDoseAccent(status: "pending" | "taken" | "missed") {
   return colors.amber;
 }
 
-function getPillBackground(color: string) {
-  if (color === "#9D8BD7") return "#F1ECFB";
-  if (color === "#E3A16B") return "#FCF1EB";
-  if (color === "#81C6BE") return "#E8F7F6";
-  return "#F7F3EE";
-}
-
 function getMedicationInstruction(name: string) {
   if (name === "Tacrolimus") return "Before eating";
   if (name === "Mycophenolate" || name === "Prednisone") return "After eating";
   return "";
 }
 
+function ProgressRing({ taken, total }: { taken: number; total: number }) {
+  const size = 68;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = total > 0 ? Math.min(Math.max(taken / total, 0), 1) : 0;
+  const progressColor = taken === total && total > 0 ? colors.taken : taken > 0 ? colors.amber : "#ECE3D7";
+
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
+        <Circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#ECE3D7" strokeWidth={strokeWidth} />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={progressColor}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * progress} ${circumference}`}
+        />
+      </Svg>
+
+      <Text className="text-base font-bold text-brand-navy">
+        {taken}/{total}
+      </Text>
+    </View>
+  );
+}
+
+function calculateAdherenceStreak(doseEvents: Array<{ scheduled_datetime: string; status: "pending" | "taken" | "missed" }>) {
+  const byDate = new Map<string, Array<{ status: "pending" | "taken" | "missed" }>>();
+
+  for (const event of doseEvents) {
+    const dateKey = event.scheduled_datetime.slice(0, 10);
+    const current = byDate.get(dateKey) ?? [];
+    current.push({ status: event.status });
+    byDate.set(dateKey, current);
+  }
+
+  const sortedDates = Array.from(byDate.keys()).sort((a, b) => b.localeCompare(a));
+  let streak = 0;
+
+  for (const dateKey of sortedDates) {
+    const events = byDate.get(dateKey) ?? [];
+    const completed = events.length > 0 && events.every((event) => event.status === "taken");
+
+    if (!completed) {
+      if (streak === 0) {
+        continue;
+      }
+      break;
+    }
+
+    streak += 1;
+  }
+
+  return streak;
+}
+
 export default function TodayScreen() {
-  const { currentPatient, todayDoseItems, markDoseTaken } = useAppData();
+  const { currentPatient, todayDoseItems, doseEvents, markDoseTaken } = useAppData();
   const total = todayDoseItems.length;
   const taken = todayDoseItems.filter((item) => item.doseEvent.status === "taken").length;
+  const streak = calculateAdherenceStreak(doseEvents);
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <View className="flex-1 bg-brand-bg">
       <LinearGradient colors={[colors.navy, "#89A6BD"]} style={{ paddingTop: 72, paddingBottom: 28, paddingHorizontal: 20 }}>
-        <View style={{ position: "absolute", right: -16, top: 18, opacity: 0.18 }}>
-          <PillGlyph color="#FFFFFF" width={110} />
+        <View style={{ position: "absolute", right: 12, top: 10, opacity: 0.22, transform: [{ rotate: "-18deg" }] }}>
+          <PillGlyph color="#D7E7F3" width={132} />
         </View>
 
         <View>
@@ -52,37 +109,36 @@ export default function TodayScreen() {
 
       <View className="px-5" style={{ marginTop: -18 }}>
         <View
-          className="rounded-[24px] border border-brand-border bg-white p-4"
+          className="rounded-[28px] border border-brand-border bg-white px-5 py-5"
           style={{
             shadowColor: colors.navy,
             shadowOpacity: 0.08,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 8 },
+            shadowRadius: 20,
+            shadowOffset: { width: 0, height: 10 },
           }}
         >
-          <View className="flex-row items-center gap-4">
-            <View
-              style={{
-                width: 68,
-                height: 68,
-                borderRadius: 999,
-                borderWidth: 8,
-                borderColor: taken === total && total > 0 ? colors.taken : taken > 0 ? colors.amber : "#ECE3D7",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text className="text-base font-bold text-brand-navy">
-                {taken}/{total}
-              </Text>
-            </View>
+          <View className="flex-row items-center">
+            <ProgressRing taken={taken} total={total} />
 
-            <View className="flex-1">
-              <Text className="text-[17px] font-bold text-brand-navy">
+            <View className="ml-5 flex-1 pr-5">
+              <Text className="text-[18px] font-bold text-brand-navy">
                 {total === 0 ? "No medications today" : `${taken} of ${total} taken`}
               </Text>
               <Text className="mt-1 text-sm text-brand-muted">Today&apos;s medications</Text>
-              {taken === total && total > 0 ? <Text className="mt-1 text-sm font-medium text-brand-taken">All done for today.</Text> : null}
+              <View className="mt-4 flex-row items-center">
+                <View className="mr-2 h-5 w-5 items-center justify-center rounded-full border border-[#D8E3D5] bg-[#F7FBF6]">
+                  <Check color={colors.taken} size={12} strokeWidth={2.6} />
+                </View>
+                <Text className="text-[12px] font-medium text-brand-muted">Keep going! You&apos;re doing great.</Text>
+              </View>
+            </View>
+
+            <View className="h-[92px] w-px bg-[#E9E1D6]" />
+
+            <View className="ml-5 items-center justify-center">
+              <Flame color={colors.amber} fill={colors.amber} size={22} strokeWidth={1.8} />
+              <Text className="mt-2 text-[34px] font-bold leading-none text-brand-navy">{streak}</Text>
+              <Text className="mt-1 text-[13px] font-semibold text-brand-muted">Day Streak</Text>
             </View>
           </View>
         </View>
@@ -112,16 +168,14 @@ export default function TodayScreen() {
               <View className="h-[132px] flex-row items-center px-6">
                 <View
                   className="mr-4 h-[70px] w-[70px] items-center justify-center rounded-[24px]"
-                  style={{ backgroundColor: getPillBackground(item.medication.color_label || "") }}
+                  style={{ backgroundColor: getMedicationBackground(item.medication.color_label || ""), borderWidth: 1, borderColor: "#EFE6DA" }}
                 >
-                  <LinearGradient
-                    colors={[item.gradientTo, item.medication.color_label || colors.amber]}
-                    start={{ x: 0, y: 1 }}
-                    end={{ x: 1, y: 0 }}
-                    style={{ borderRadius: 999, paddingHorizontal: 2, paddingVertical: 2 }}
-                  >
-                    <PillGlyph color="#FFFFFF" width={42} />
-                  </LinearGradient>
+                  <PillGlyph
+                    color={item.medication.color_label || colors.amber}
+                    secondaryColor={item.gradientTo}
+                    form={item.medication.form}
+                    width={42}
+                  />
                 </View>
 
                 <View className="flex-1 pr-4">
@@ -165,7 +219,7 @@ export default function TodayScreen() {
 
         {todayDoseItems.length === 0 ? (
           <View className="items-center rounded-[24px] border border-brand-border bg-white px-6 py-10">
-            <PillGlyph color={colors.amber} width={56} />
+            <PillGlyph color={colors.amber} form="capsule" width={56} />
             <Text className="mt-4 text-base font-semibold text-brand-navy">No medications scheduled</Text>
             <Text className="mt-1 text-center text-sm text-brand-muted">Use the center plus button to add your first medication.</Text>
           </View>

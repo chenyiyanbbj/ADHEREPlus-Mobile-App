@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ScrollView, Text, View } from "react-native";
 
+import { medicationFormOptions } from "@/lib/medications";
 import { useAppData } from "@/store/app-data-provider";
 
 function PassportSection({ title, children }: { title: string; children: ReactNode }) {
@@ -34,7 +35,9 @@ export default function PassportScreen() {
                 <Text className="mt-1 text-xs text-brand-muted">{med.dosage || "Dose TBD"}</Text>
               </View>
               <View className="rounded-full bg-brand-amber/15 px-3 py-1">
-                <Text className="text-xs font-semibold text-brand-amber">{med.form || "other"}</Text>
+                <Text className="text-xs font-semibold text-brand-amber">
+                  {medicationFormOptions.find((option) => option.value === med.form)?.label ?? med.form}
+                </Text>
               </View>
             </View>
           ))}

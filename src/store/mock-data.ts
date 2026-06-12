@@ -8,6 +8,7 @@ import type {
 } from "@/types/db";
 
 import { isoNow, todayKey } from "@/lib/dates";
+import { isScheduleDueOnDate } from "@/lib/medications";
 
 const now = isoNow();
 const patientUserId = "user-patient-1";
@@ -64,7 +65,7 @@ export const mockMedications: MedicationRecord[] = [
     patient_id: patientProfileId,
     medication_name: "Prednisone",
     dosage: "5 mg",
-    form: "tablet",
+    form: "softgel",
     color_label: "#81C6BE",
     is_active: true,
     created_by_user_id: patientUserId,
@@ -74,11 +75,11 @@ export const mockMedications: MedicationRecord[] = [
 ];
 
 export const mockSchedules: MedicationScheduleRecord[] = [
-  { id: "sch-1", medication_id: "med-1", patient_id: patientProfileId, scheduled_time: "08:00", frequency: "daily", start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
-  { id: "sch-2", medication_id: "med-1", patient_id: patientProfileId, scheduled_time: "20:00", frequency: "daily", start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
-  { id: "sch-3", medication_id: "med-2", patient_id: patientProfileId, scheduled_time: "08:00", frequency: "daily", start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
-  { id: "sch-4", medication_id: "med-2", patient_id: patientProfileId, scheduled_time: "20:00", frequency: "daily", start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
-  { id: "sch-5", medication_id: "med-3", patient_id: patientProfileId, scheduled_time: "12:00", frequency: "daily", start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
+  { id: "sch-1", medication_id: "med-1", patient_id: patientProfileId, scheduled_time: "08:00", frequency: "daily", weekdays: null, start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
+  { id: "sch-2", medication_id: "med-1", patient_id: patientProfileId, scheduled_time: "20:00", frequency: "daily", weekdays: null, start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
+  { id: "sch-3", medication_id: "med-2", patient_id: patientProfileId, scheduled_time: "08:00", frequency: "daily", weekdays: null, start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
+  { id: "sch-4", medication_id: "med-2", patient_id: patientProfileId, scheduled_time: "20:00", frequency: "daily", weekdays: null, start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
+  { id: "sch-5", medication_id: "med-3", patient_id: patientProfileId, scheduled_time: "12:00", frequency: "daily", weekdays: null, start_date: todayKey(), end_date: null, is_active: true, created_at: now, updated_at: now },
 ];
 
 function generateDoseEvents(): DoseEventRecord[] {
@@ -91,6 +92,10 @@ function generateDoseEvents(): DoseEventRecord[] {
     const dateKey = date.toISOString().slice(0, 10);
 
     for (const schedule of mockSchedules) {
+      if (!isScheduleDueOnDate(schedule, date)) {
+        continue;
+      }
+
       const scheduledDatetime = `${dateKey}T${schedule.scheduled_time}:00.000Z`;
       const morning = Number(schedule.scheduled_time.slice(0, 2)) <= 9;
       const status = daysAgo === 0 ? (morning ? "taken" : "pending") : daysAgo === 3 ? "missed" : "taken";

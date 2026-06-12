@@ -1,6 +1,8 @@
 export type Role = "patient" | "doctor" | "admin";
 export type UserStatus = "active" | "inactive";
 export type DoseStatus = "pending" | "taken" | "missed";
+export type ScheduleFrequency = "daily" | "weekly";
+export type WeekdayCode = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
 
 export interface UserRecord {
   id: string;
@@ -28,7 +30,7 @@ export interface MedicationRecord {
   patient_id: string;
   medication_name: string;
   dosage: string;
-  form: "capsule" | "tablet" | "liquid" | "other";
+  form: "capsule" | "tablet" | "softgel";
   color_label: string;
   is_active: boolean;
   created_by_user_id: string;
@@ -41,7 +43,8 @@ export interface MedicationScheduleRecord {
   medication_id: string;
   patient_id: string;
   scheduled_time: string;
-  frequency: "daily";
+  frequency: ScheduleFrequency;
+  weekdays: WeekdayCode[] | null;
   start_date: string;
   end_date: string | null;
   is_active: boolean;
